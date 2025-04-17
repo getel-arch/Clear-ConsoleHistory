@@ -1,41 +1,42 @@
 #include <windows.h>
+#include <shlobj.h>
 #include <stdio.h>
 
-void printConsoleHistory(const char *exeName) {
-    DWORD historyLength = GetConsoleCommandHistoryLengthA((LPSTR)exeName);
-    if (historyLength == 0) {
-        printf("No console history found for %s.\n", exeName);
-        return;
-    }
+void clearPowerShellHistory() {
+    char historyPath[MAX_PATH];
 
-    char *buffer = (char *)malloc(historyLength + 1);
-    if (buffer == NULL) {
-        printf("Failed to allocate memory for console history.\n");
-        return;
-    }
+    // Get the path to the PowerShell history file
+    if (SUCCEEDED(SHGetFolderPathA(NULL, CSIDL_PROFILE, NULL, 0, historyPath))) {
+        strcat(historyPath, "\\AppData\\Roaming\\Microsoft\\Windows\\PowerShell\\PSReadLine\\ConsoleHost_history.txt");
 
-    if (GetConsoleCommandHistoryA(buffer, historyLength, (LPSTR)exeName)) {
-        buffer[historyLength] = '\0'; // Null-terminate the buffer
-        printf("Console history for %s:\n%s\n", exeName, buffer);
+        // Attempt to truncate the history file
+        HANDLE fileHandle = CreateFileA(
+            historyPath,
+            GENERIC_WRITE,
+            0,
+            NULL,
+            OPEN_EXISTING,
+            FILE_ATTRIBUTE_NORMAL,
+            NULL
+        );
+
+        if (fileHandle != INVALID_HANDLE_VALUE) {
+            if (SetEndOfFile(fileHandle)) {
+                printf("PowerShell history cleared successfully.\n");
+            } else {
+                printf("Failed to truncate PowerShell history file. Error code: %lu\n", GetLastError());
+            }
+            CloseHandle(fileHandle);
+        } else {
+            printf("Failed to open PowerShell history file. Error code: %lu\n", GetLastError());
+        }
     } else {
-        printf("Failed to retrieve console history for %s. Error code: %lu\n", exeName, GetLastError());
+        printf("Failed to retrieve the user profile path.\n");
     }
-
-    free(buffer);
 }
 
 int main() {
-    const char *exeName = "powershell.exe";
-
-    printf("Console history before clearing:\n");
-    printConsoleHistory(exeName);
-
-    // Call ExpungeConsoleCommandHistoryA to clear the console history for PowerShell
-    ExpungeConsoleCommandHistoryA((LPSTR)exeName);
-    printf("PowerShell console history cleared successfully.\n");
-
-    printf("Console history after clearing:\n");
-    printConsoleHistory(exeName);
-
+    printf("Clearing PowerShell history...\n");
+    clearPowerShellHistory();
     return 0;
 }
