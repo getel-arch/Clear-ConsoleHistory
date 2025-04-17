@@ -1,11 +1,6 @@
 #include <windows.h>
 #include <stdio.h>
 
-// Correct the function prototypes to match wincon.h
-VOID WINAPI ExpungeConsoleCommandHistoryA(LPSTR exeName);
-DWORD WINAPI GetConsoleCommandHistoryLengthA(LPSTR exeName);
-DWORD WINAPI GetConsoleCommandHistoryA(LPSTR buffer, DWORD bufferLength, LPSTR exeName);
-
 void printConsoleHistory(const char *exeName) {
     DWORD historyLength = GetConsoleCommandHistoryLengthA((LPSTR)exeName);
     if (historyLength == 0) {
