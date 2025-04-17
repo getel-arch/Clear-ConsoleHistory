@@ -1,13 +1,13 @@
 #include <windows.h>
 #include <stdio.h>
 
-// Declare the function prototypes
-BOOL WINAPI ExpungeConsoleCommandHistoryA(LPCSTR exeName);
-DWORD WINAPI GetConsoleCommandHistoryLengthA(LPCSTR exeName);
-DWORD WINAPI GetConsoleCommandHistoryA(LPSTR buffer, DWORD bufferLength, LPCSTR exeName);
+// Correct the function prototypes to match wincon.h
+VOID WINAPI ExpungeConsoleCommandHistoryA(LPSTR exeName);
+DWORD WINAPI GetConsoleCommandHistoryLengthA(LPSTR exeName);
+DWORD WINAPI GetConsoleCommandHistoryA(LPSTR buffer, DWORD bufferLength, LPSTR exeName);
 
 void printConsoleHistory(const char *exeName) {
-    DWORD historyLength = GetConsoleCommandHistoryLengthA(exeName);
+    DWORD historyLength = GetConsoleCommandHistoryLengthA((LPSTR)exeName);
     if (historyLength == 0) {
         printf("No console history found for %s.\n", exeName);
         return;
@@ -19,7 +19,7 @@ void printConsoleHistory(const char *exeName) {
         return;
     }
 
-    if (GetConsoleCommandHistoryA(buffer, historyLength, exeName)) {
+    if (GetConsoleCommandHistoryA(buffer, historyLength, (LPSTR)exeName)) {
         buffer[historyLength] = '\0'; // Null-terminate the buffer
         printf("Console history for %s:\n%s\n", exeName, buffer);
     } else {
@@ -36,11 +36,8 @@ int main() {
     printConsoleHistory(exeName);
 
     // Call ExpungeConsoleCommandHistoryA to clear the console history for PowerShell
-    if (ExpungeConsoleCommandHistoryA(exeName)) {
-        printf("PowerShell console history cleared successfully.\n");
-    } else {
-        printf("Failed to clear PowerShell console history. Error code: %lu\n", GetLastError());
-    }
+    ExpungeConsoleCommandHistoryA((LPSTR)exeName);
+    printf("PowerShell console history cleared successfully.\n");
 
     printf("Console history after clearing:\n");
     printConsoleHistory(exeName);
